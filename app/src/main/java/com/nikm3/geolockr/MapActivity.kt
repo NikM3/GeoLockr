@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.FragmentManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -21,12 +20,17 @@ class MapActivity : FragmentActivity(), OnMapReadyCallback {
     private lateinit var currentLocation: Location
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val permissionCode = 101
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
         fusedLocationProviderClient =  LocationServices.getFusedLocationProviderClient(this@MapActivity)
         fetchLocation()
     }
+
+    /**
+     * Get the User's current location from their device and send it to the map
+     */
     private fun fetchLocation() {
         if (ActivityCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION) !=
@@ -49,6 +53,10 @@ class MapActivity : FragmentActivity(), OnMapReadyCallback {
             }
         }
     }
+
+    /**
+     * Mark the User's current location
+     */
     override fun onMapReady(googleMap: GoogleMap) {
         val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
         val markerOptions = MarkerOptions().position(latLng).title("You're here!")
@@ -56,6 +64,10 @@ class MapActivity : FragmentActivity(), OnMapReadyCallback {
         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
         googleMap.addMarker(markerOptions)
     }
+
+    /**
+     * Double check the required permissions
+     */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String?>,
                                             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -63,7 +75,7 @@ class MapActivity : FragmentActivity(), OnMapReadyCallback {
             permissionCode -> if (grantResults.isNotEmpty() && grantResults[0] ==
             PackageManager.PERMISSION_GRANTED) {
             fetchLocation()
-        }
+            }
         }
     }
 }

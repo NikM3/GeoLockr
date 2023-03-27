@@ -5,11 +5,11 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.location.Location
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.nikm3.geolockr.databinding.ActivityLockBinding
@@ -71,6 +71,14 @@ class LockActivity : AppCompatActivity() {
     }
 
     /**
+     * Cleanup the app and remove any Geofences
+     */
+    override fun onDestroy() {
+        super.onDestroy()
+        geofencingClient.removeGeofences(geofencePendingIntent)
+    }
+
+    /**
      * Add Geofence around current location, activate when left
      */
     @SuppressLint("MissingPermission", "VisibleForTests")
@@ -95,9 +103,9 @@ class LockActivity : AppCompatActivity() {
                     .build()
                 Log.d(TAG,"Built Request")
 
-                geofencingClient.removeGeofences(geofencePendingIntent)?.run {
+                geofencingClient.removeGeofences(geofencePendingIntent).run {
                     addOnCompleteListener {
-                        geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
+                        geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
                             addOnSuccessListener {
                                 Toast.makeText(
                                     this@LockActivity, R.string.geofence_added,
@@ -145,9 +153,9 @@ class LockActivity : AppCompatActivity() {
             .build()
         Log.d(TAG,"Built Request")
 
-        geofencingClient.removeGeofences(geofencePendingIntent)?.run {
+        geofencingClient.removeGeofences(geofencePendingIntent).run {
             addOnCompleteListener {
-                geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
+                geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
                     addOnSuccessListener {
                         Toast.makeText(
                             this@LockActivity, R.string.geofence_added,
