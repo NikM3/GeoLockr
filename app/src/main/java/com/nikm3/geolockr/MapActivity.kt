@@ -31,7 +31,7 @@ class MapActivity : FragmentActivity(), OnMapReadyCallback {
     }
 
     /**
-     * Get the User's current location from their device and send it to the map
+     * Get the User's current location from their device and call the map
      */
     private fun fetchLocation() {
         if (ActivityCompat.checkSelfPermission(

@@ -36,6 +36,7 @@ class LockActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val message = binding.textView
+        val button = binding.unlockButton
         geofencingClient = LocationServices.getGeofencingClient(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         geofencePendingIntent.isImmutable
@@ -67,6 +68,12 @@ class LockActivity : AppCompatActivity() {
                 startActivity(intent)
                 finish()
             }
+        }
+
+        button.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
         }
     }
 
@@ -182,7 +189,7 @@ class LockActivity : AppCompatActivity() {
         const val CURRENT = "current_location"
         const val DESTINATION = "destination_location"
         const val GEOFENCE_RADIUS_IN_METERS = 100f
-        val MOCK_LAT_LNG = LatLng(35.2080,-80.8480)
+        val MOCK_LAT_LNG = LatLng(33.9965,-81.0271)
         const val TAG = "LockActivity"
     }
 }

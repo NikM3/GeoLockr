@@ -37,11 +37,10 @@
             android:layout_weight="1">
 
             <Button
-                android:id="@+id/button"
+                android:id="@+id/unlockButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="20dp"
-                android:layout_weight="1"
                 android:text="@string/emergency_unlock_button" />
         </FrameLayout>
 

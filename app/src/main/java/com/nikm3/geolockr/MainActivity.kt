@@ -44,7 +44,6 @@ class MainActivity : AppCompatActivity(){
                 val intent = Intent(this, LockActivity::class.java)
                 intent.putExtra(EXTRA_MODE, 1)
                 startActivity(intent)
-                finish()
             }
         }
 
@@ -53,7 +52,6 @@ class MainActivity : AppCompatActivity(){
                 val intent = Intent(this, LockActivity::class.java)
                 intent.putExtra(EXTRA_MODE, 2)
                 startActivity(intent)
-                finish()
             }
 
         }
