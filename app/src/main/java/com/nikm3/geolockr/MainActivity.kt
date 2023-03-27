@@ -4,19 +4,20 @@ import android.Manifest
 import android.annotation.TargetApi
 import android.content.*
 import android.content.pm.PackageManager
-import android.location.Location
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.IBinder
 import android.provider.Settings
 import android.util.Log
-import android.widget.Button
-import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.material.snackbar.Snackbar
 import com.nikm3.geolockr.databinding.ActivityMainBinding
-import com.nikm3.geolockr.R
 
 class MainActivity : AppCompatActivity(){
 
@@ -24,6 +25,7 @@ class MainActivity : AppCompatActivity(){
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -62,7 +64,8 @@ class MainActivity : AppCompatActivity(){
         }
 
         whereAmIButton.setOnClickListener {
-
+            val intent = Intent(this, MapActivity::class.java)
+            startActivity(intent)
         }
     }
 
@@ -72,10 +75,11 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun checkPermissions() : Boolean {
-        return if (foregroundAndBackgroundLocationPermissionApproved()) {
+        return if (permissionsApproved()) {
+
             true
         } else {
-            requestForegroundAndBackgroundLocationPermissions()
+            requestNecessaryPermissions()
             false
         }
     }
@@ -112,9 +116,42 @@ class MainActivity : AppCompatActivity(){
         }
     }
 
+    private fun checkDeviceLocationSettings(resolve:Boolean = true) {
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+        val settingsClient = LocationServices.getSettingsClient(this)
+        val locationSettingsResponseTask =
+            settingsClient.checkLocationSettings(builder.build())
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve) {
+                try {
+                    exception.startResolutionForResult(
+                        this@MainActivity,
+                        REQUEST_TURN_DEVICE_LOCATION_ON
+                    )
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
+                }
+            } else {
+                Snackbar.make(
+                    findViewById(R.id.activity_main),
+                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    checkDeviceLocationSettings()
+                }.show()
+            }
+        }
+        locationSettingsResponseTask.addOnCompleteListener {
+            if (it.isSuccessful) {
+                /* Do something */
+            }
+        }
+    }
 
     @TargetApi(29)
-    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+    private fun permissionsApproved(): Boolean {
         val foregroundLocationApproved = (
                 PackageManager.PERMISSION_GRANTED ==
                         ActivityCompat.checkSelfPermission(this,
@@ -136,8 +173,8 @@ class MainActivity : AppCompatActivity(){
      *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
      */
     @TargetApi(29 )
-    private fun requestForegroundAndBackgroundLocationPermissions() {
-        if (foregroundAndBackgroundLocationPermissionApproved())
+    private fun requestNecessaryPermissions() {
+        if (permissionsApproved())
             return
         var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         val resultCode = when {
@@ -158,7 +195,7 @@ class MainActivity : AppCompatActivity(){
 
     companion object {
         internal const val ACTION_GEOFENCE_EVENT =
-            "HuntMainActivity.treasureHunt.action.ACTION_GEOFENCE_EVENT"
+            "MainActivity.ACTION_GEOFENCE_EVENT"
         const val EXTRA_MODE = "lock_screen_mode"
     }
 }

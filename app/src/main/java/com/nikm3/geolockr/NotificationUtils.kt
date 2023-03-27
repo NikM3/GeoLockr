@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 
 fun createChannel(context: Context) {
@@ -37,13 +38,14 @@ fun createChannel(context: Context) {
  * entered notification.  It sends a custom notification based on the name string associated
  * with the LANDMARK_DATA from GeofencingConstatns in the GeofenceUtils file.
  */
+@RequiresApi(Build.VERSION_CODES.S)
 fun NotificationManager.sendGeofenceEnteredNotification(context: Context) {
     val contentIntent = Intent(context, MainActivity::class.java)
     val contentPendingIntent = PendingIntent.getActivity(
         context,
         NOTIFICATION_ID,
         contentIntent,
-        PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
     val mapImage = BitmapFactory.decodeResource(
         context.resources,
@@ -68,13 +70,14 @@ fun NotificationManager.sendGeofenceEnteredNotification(context: Context) {
  * entered notification.  It sends a custom notification based on the name string associated
  * with the LANDMARK_DATA from GeofencingConstatns in the GeofenceUtils file.
  */
+@RequiresApi(Build.VERSION_CODES.S)
 fun NotificationManager.sendGeofenceLeftNotification(context: Context) {
     val contentIntent = Intent(context, MainActivity::class.java)
     val contentPendingIntent = PendingIntent.getActivity(
         context,
         NOTIFICATION_ID,
         contentIntent,
-        PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
     val mapImage = BitmapFactory.decodeResource(
         context.resources,

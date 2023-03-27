@@ -22,6 +22,9 @@
     <string name="notification_channel_description">Geofence status notification</string>
     <string name="geofence_left_user">You have left your lockdown location!\nDevice unlocked.</string>
     <string name="emergency_unlock_button">Emergency Unlock</string>
-    <string name="current_lock_message">Device will unlock once you are %f meters away from your current location</string>
-    <string name="destination_lock_message">Device will unlock when you reach your destination of</string>
+    <string name="current_lock_message">Device will unlock once you are %.1f meters away from your current location\n(%s, %s)</string>
+    <string name="destination_lock_message">Device will unlock when you reach your destination of %s, %s</string>
+    <string name="geofence_added">Successfully made geofence</string>
+    <string name="geofences_not_added">Failed to create geofence</string>
+    <string name="location_required_error">Location services are required for this app</string>
 </resources>

@@ -4,16 +4,17 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.location.Location
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.LocationServices
+import androidx.annotation.RequiresApi
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.nikm3.geolockr.databinding.ActivityLockBinding
 
+@RequiresApi(Build.VERSION_CODES.S)
 class LockActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLockBinding
@@ -24,9 +25,11 @@ class LockActivity : AppCompatActivity() {
     private val geofencePendingIntent: PendingIntent by lazy {
         val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
         intent.action = MainActivity.ACTION_GEOFENCE_EVENT
-        PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
+    @SuppressLint("MissingPermission")
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLockBinding.inflate(layoutInflater)
@@ -35,16 +38,27 @@ class LockActivity : AppCompatActivity() {
         val message = binding.textView
         geofencingClient = LocationServices.getGeofencingClient(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        geofencePendingIntent.isImmutable
         createChannel(this)
 
-        when (intent.getStringExtra(MainActivity.EXTRA_MODE)!!.toInt()) {
+        when (intent.getIntExtra(MainActivity.EXTRA_MODE,0)) {
             1 -> { // User selected current location lock
+                Log.d(TAG,"Made it into Current Location Switch Case")
                 geofenceCurrentLocation()
-                message.text = getString(R.string.current_lock_message, GEOFENCE_RADIUS_IN_METERS)
+                fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                    message.text =
+                        getString(R.string.current_lock_message,
+                            GEOFENCE_RADIUS_IN_METERS,
+                            location!!.latitude.toString(),
+                            location.longitude.toString())
+                }
             }
             2 -> { // User selected destination lock
+                Log.d(TAG,"Made it into Destination Switch Case")
                 geofenceDestination()
-                message.text = getString(R.string.destination_lock_message)
+                message.text = getString(R.string.destination_lock_message,
+                        MOCK_LAT_LNG.latitude.toString(),
+                        MOCK_LAT_LNG.longitude.toString())
             }
             else -> {
                 // Entered on inappropriate mode, go back to MainActivity
@@ -59,28 +73,51 @@ class LockActivity : AppCompatActivity() {
     /**
      * Add Geofence around current location, activate when left
      */
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "VisibleForTests")
     private fun geofenceCurrentLocation() {
         fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
             if (location != null) {
                 geofence = Geofence.Builder()
-                    // Set the request ID of the geofence. This is a string to identify this
-                    // geofence.
                     .setRequestId(CURRENT)
-
-                    // Set the circular region of this geofence.
                     .setCircularRegion(
                         location.latitude,
                         location.longitude,
                         GEOFENCE_RADIUS_IN_METERS
                     )
-
-                    // Set the transition types of interest. Alerts are only generated for these
-                    // transition. We track entry and exit transitions in this sample.
+                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
-
-                    // Create the geofence.
                     .build()
+                Log.d(TAG,"Built GeoFence")
+
+                val geofencingRequest = GeofencingRequest.Builder()
+                    .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_EXIT)
+                    .addGeofence(geofence)
+                    .build()
+                Log.d(TAG,"Built Request")
+
+                geofencingClient.removeGeofences(geofencePendingIntent)?.run {
+                    addOnCompleteListener {
+                        geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
+                            addOnSuccessListener {
+                                Toast.makeText(
+                                    this@LockActivity, R.string.geofence_added,
+                                    Toast.LENGTH_SHORT
+                                )
+                                    .show()
+                                Log.d("Add Geofence", geofence.requestId)
+                            }
+                            addOnFailureListener {
+                                Toast.makeText(
+                                    this@LockActivity, R.string.geofences_not_added,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                if (it.message != null) {
+                                    Log.w(TAG, it.message!!)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -88,32 +125,56 @@ class LockActivity : AppCompatActivity() {
     /**
      * Add Geofence around destination, activate when entered
      */
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "VisibleForTests")
     private fun geofenceDestination() {
-            geofence = Geofence.Builder()
-                // Set the request ID of the geofence. This is a string to identify this
-                // geofence.
-                .setRequestId(CURRENT)
+        geofence = Geofence.Builder()
+            .setRequestId(DESTINATION)
+            .setCircularRegion(
+                MOCK_LAT_LNG.latitude,
+                MOCK_LAT_LNG.longitude,
+                GEOFENCE_RADIUS_IN_METERS
+            )
+            .setExpirationDuration(Geofence.NEVER_EXPIRE)
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+            .build()
+        Log.d(TAG,"Built GeoFence")
 
-                // Set the circular region of this geofence.
-                .setCircularRegion(
-                    MOCK_LAT_LNG.latitude,
-                    MOCK_LAT_LNG.longitude,
-                    GEOFENCE_RADIUS_IN_METERS
-                )
+        val geofencingRequest = GeofencingRequest.Builder()
+            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+            .addGeofence(geofence)
+            .build()
+        Log.d(TAG,"Built Request")
 
-                // Set the transition types of interest. Alerts are only generated for these
-                // transition. We track entry and exit transitions in this sample.
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
-
-                // Create the geofence.
-                .build()
+        geofencingClient.removeGeofences(geofencePendingIntent)?.run {
+            addOnCompleteListener {
+                geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
+                    addOnSuccessListener {
+                        Toast.makeText(
+                            this@LockActivity, R.string.geofence_added,
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
+                        Log.d("Add Geofence", geofence.requestId)
+                    }
+                    addOnFailureListener {
+                        Toast.makeText(
+                            this@LockActivity, R.string.geofences_not_added,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        if (it.message != null) {
+                            Log.w(TAG, it.message!!)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     companion object {
         const val CURRENT = "current_location"
         const val DESTINATION = "destination_location"
         const val GEOFENCE_RADIUS_IN_METERS = 100f
-        val MOCK_LAT_LNG = LatLng(50.0, 50.0)
+        val MOCK_LAT_LNG = LatLng(35.2080,-80.8480)
+        const val TAG = "LockActivity"
     }
 }

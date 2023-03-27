@@ -46,7 +46,8 @@
                 android:id="@+id/drivingButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/driving_button" />
+                android:text="@string/driving_button"
+                android:visibility="gone" />
 
             <Button
                 android:id="@+id/whereButton"
