@@ -16,6 +16,8 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
+// Done with tutorial from https://www.tutorialspoint.com/how-to-show-current-location-on-a-google-map-on-android-using-kotlin
+
 class MapActivity : FragmentActivity(), OnMapReadyCallback {
     private lateinit var currentLocation: Location
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
